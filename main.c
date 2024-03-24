@@ -12,6 +12,12 @@ int main ( int argc, const char *argv[] )
     (void) argc;
     (void) argv;
 
+    // Initialized data
+    geometry _geometry_a = { 0 },
+             _geometry_b = { 0 };
+
+    geometry_area(&_geometry_a);
+
     // Success
     return EXIT_SUCCESS;
 }

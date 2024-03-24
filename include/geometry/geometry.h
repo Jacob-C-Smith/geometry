@@ -1,8 +1,9 @@
 /** !
  * Geometry header
  * 
- * @author Jacob Smith
  * @file geometry/geometry.h
+ * 
+ * @author Jacob Smith
  */
 
 // Include
@@ -15,7 +16,7 @@ enum geometry_type_e
 {
     GEOMETRY_INVALID      = 0,
     GEOMETRY_POINT        = 1,
-    GEOMETRY_LINE_LIST    = 2,
+    GEOMETRY_POINT_LIST   = 2,
     GEOMETRY_LINE         = 3,
     GEOMETRY_LINE_LIST    = 4,
     GEOMETRY_TRIANGLE     = 5,
@@ -50,6 +51,7 @@ typedef int (*fn_geometry_length)       (geometry *p_a, double   *p_return);
 typedef int (*fn_geometry_area)         (geometry *p_a, double   *p_return);
 typedef int (*fn_geometry_centroid)     (geometry *p_a, geometry *p_return);
 typedef int (*fn_geometry_intersection) (geometry *p_a, geometry *p_b, geometry *p_return);
+typedef int (*fn_geometry_serialize)    (geometry *p_a, void     *p_return);
 
 // Structure definitions
 struct geometry_point_s 
@@ -87,3 +89,5 @@ struct geometry_s
         geometry_line_list  line_list;
     };
 };
+
+double geometry_area ( geometry *p_geometry );

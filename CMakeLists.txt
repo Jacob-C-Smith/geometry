@@ -18,6 +18,32 @@ if (${IS_DEBUG_BUILD})
     add_compile_options(-Wall -Wextra -Wpedantic -Wpointer-arith -Wstrict-prototypes -Wformat-security -Wfloat-equal -Wshadow -Wconversion -Wlogical-not-parentheses -Wnull-dereference -Wno-unused-value)
 endif ()
 
+# Add the LOG project
+if ( NOT "${HAS_LOG}")
+
+    # Add the log directory
+    add_subdirectory(${CMAKE_SOURCE_DIR}/extern/log ${CMAKE_SOURCE_DIR}/build/log)
+
+    # Let any parent project know that it has the LOG project
+    if(NOT PROJECT_IS_TOP_LEVEL)
+        set(HAS_LOG true PARENT_SCOPE)
+        set(LOG_INCLUDE_DIR ${LOG_INCLUDE_DIR} PARENT_SCOPE)
+    endif()
+endif()
+
+# Add the SYNC project
+if ( NOT "${HAS_SYNC}")
+
+    # Add the sync directory
+    add_subdirectory(${CMAKE_SOURCE_DIR}/extern/sync ${CMAKE_SOURCE_DIR}/build/sync)
+
+    # Let any parent project know that it has the SYNC project
+    if(NOT PROJECT_IS_TOP_LEVEL)
+        set(HAS_SYNC true PARENT_SCOPE)
+        set(SYNC_INCLUDE_DIR ${SYNC_INCLUDE_DIR} PARENT_SCOPE)
+    endif()
+endif()
+
 # Add the geometry project
 if ( NOT "${HAS_GEOMETRY}")
 
@@ -36,17 +62,17 @@ endif()
 # Add source to this project's executable.
 add_executable (geometry_example "main.c")
 add_dependencies(geometry_example geometry)
-target_include_directories(geometry_example PUBLIC ${GEOMETRY_INCLUDE_DIR})
+target_include_directories(geometry_example PUBLIC ${GEOMETRY_INCLUDE_DIR} ${SYNC_INCLUDE_DIR} ${LOG_INCLUDE_DIR})
 target_link_libraries(geometry_example geometry)
 
 # Add source to the tester
-add_executable (geometry_test "geometry_test.c")
-add_dependencies(geometry_test geometry log sync)
-target_include_directories(geometry_test PUBLIC ${GEOMETRY_INCLUDE_DIR} ${SYNC_INCLUDE_DIR} ${LOG_INCLUDE_DIR})
-target_link_libraries(geometry_test geometry log sync)
+#add_executable (geometry_test "geometry_test.c")
+#add_dependencies(geometry_test geometry log sync)
+#target_include_directories(geometry_test PUBLIC ${GEOMETRY_INCLUDE_DIR} ${SYNC_INCLUDE_DIR} ${LOG_INCLUDE_DIR})
+#target_link_libraries(geometry_test geometry log sync)
 
 # Add source to this project's library
 add_library (geometry SHARED "geometry.c")
-add_dependencies(geometry)
-target_include_directories(geometry PUBLIC ${GEOMETRY_INCLUDE_DIR})
-target_link_libraries(geometry)
+add_dependencies(geometry log sync)
+target_include_directories(geometry PUBLIC ${GEOMETRY_INCLUDE_DIR} ${SYNC_INCLUDE_DIR} ${LOG_INCLUDE_DIR})
+target_link_libraries(geometry log sync)

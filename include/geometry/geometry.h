@@ -6,10 +6,33 @@
  * @author Jacob Smith
  */
 
-// Include
+// Include guard
+#pragma once
+
+// Header files
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <math.h>
+
+// log
+#include <log/log.h>
+
+// array
+#include <array/array.h>
+
+// dict
+#include <dict/dict.h>
+
+// json
+#include <json/json.h>
+
+// Platform dependent macros
+#ifdef _WIN64
+    #define DLLEXPORT extern __declspec(dllexport)
+#else
+    #define DLLEXPORT
+#endif
 
 // Enumeration definitions
 enum geometry_type_e
@@ -62,19 +85,19 @@ struct geometry_point_s
 struct geometry_point_list_s
 {
     size_t quantity;
-    geometry_point *points;
+    geometry_point *p_points;
 };
 
 struct geometry_line_s
 {
-    double x0, y0;
-    double x1, y1;
+    double x0, y0,
+           x1, y1;
 };
 
 struct geometry_line_list_s
 {
     size_t quantity;
-    geometry_line *lines;
+    geometry_line *p_lines;
 };
 
 struct geometry_s
@@ -90,4 +113,48 @@ struct geometry_s
     };
 };
 
-double geometry_area ( geometry *p_geometry );
+// Function declarations
+/** !
+ * Construct a point from X and Y values
+ * 
+ * @param p_geometry return
+ * @param x          the x value 
+ * @param y          the y value
+ * 
+ * @return 1 on success, 0 on error
+ */
+int geometry_point_construct ( geometry *p_geometry, double x, double y );
+
+/** !
+ * Construct a point from a json value
+ * 
+ * @param p_geometry return
+ * @param p_value    the json value 
+ * 
+ * @return 1 on success, 0 on error
+ */
+int geometry_point_load_as_json ( geometry *p_geometry, json_value *p_value );
+
+/** !
+ * Construct a line from two points 
+ * 
+ * @param p_geometry return
+ * @param x0         the x value of the first point
+ * @param y0         the x value of the first point
+ * @param x1         the x value of the second point
+ * @param y1         the x value of the second point
+ * 
+ * @return 1 on success, 0 on error
+ */
+int geometry_line_construct ( geometry *p_geometry, double x0, double y0, double x1, double y1 );
+
+/** !
+ * Compute the distance between two geometries
+ * 
+ * @param p_a      the first geometry
+ * @param p_b      the second geometry
+ * @param p_result return
+ * 
+ * @return 1 on success, 0 on error
+*/
+int geometry_distance ( geometry *p_a, geometry *p_b, double *p_result );

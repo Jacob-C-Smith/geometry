@@ -44,6 +44,45 @@ if ( NOT "${HAS_SYNC}")
     endif()
 endif()
 
+# Find the array module
+if ( NOT "${HAS_JSON}")
+    
+    # Add the array directory
+    add_subdirectory(${CMAKE_SOURCE_DIR}/extern/json ${CMAKE_SOURCE_DIR}/build/json)
+
+    # Let any parent project know that this project has array
+    if(NOT PROJECT_IS_TOP_LEVEL)
+        set(HAS_JSON true PARENT_SCOPE)
+        set(JSON_INCLUDE_DIR ${JSON_INCLUDE_DIR} PARENT_SCOPE)
+    endif()
+endif()
+
+# Find the array module
+if ( NOT "${HAS_ARRAY}")
+    
+    # Add the array directory
+    add_subdirectory(${CMAKE_SOURCE_DIR}/extern/array ${CMAKE_SOURCE_DIR}/build/array)
+
+    # Let any parent project know that this project has array
+    if(NOT PROJECT_IS_TOP_LEVEL)
+        set(HAS_ARRAY true PARENT_SCOPE)
+        set(ARRAY_INCLUDE_DIR ${ARRAY_INCLUDE_DIR} PARENT_SCOPE)
+    endif()
+endif()
+
+# Find the dict module
+if ( NOT "${HAS_DICT}")
+    
+    # Add the dict directory
+    add_subdirectory(${CMAKE_SOURCE_DIR}/extern/dict ${CMAKE_SOURCE_DIR}/build/dict)
+
+    # Let any parent project know that this project has dict
+    if(NOT PROJECT_IS_TOP_LEVEL)
+        set(HAS_DICT true PARENT_SCOPE)
+        set(DICT_INCLUDE_DIR ${DICT_INCLUDE_DIR} PARENT_SCOPE)
+    endif()
+endif()
+
 # Add the geometry project
 if ( NOT "${HAS_GEOMETRY}")
 
@@ -62,7 +101,7 @@ endif()
 # Add source to this project's executable.
 add_executable (geometry_example "main.c")
 add_dependencies(geometry_example geometry)
-target_include_directories(geometry_example PUBLIC ${GEOMETRY_INCLUDE_DIR} ${SYNC_INCLUDE_DIR} ${LOG_INCLUDE_DIR})
+target_include_directories(geometry_example PUBLIC ${GEOMETRY_INCLUDE_DIR} ${JSON_INCLUDE_DIR} ${ARRAY_INCLUDE_DIR} ${DICT_INCLUDE_DIR} ${SYNC_INCLUDE_DIR} ${LOG_INCLUDE_DIR})
 target_link_libraries(geometry_example geometry)
 
 # Add source to the tester
@@ -72,7 +111,7 @@ target_link_libraries(geometry_example geometry)
 #target_link_libraries(geometry_test geometry log sync)
 
 # Add source to this project's library
-add_library (geometry SHARED "geometry.c")
-add_dependencies(geometry log sync)
-target_include_directories(geometry PUBLIC ${GEOMETRY_INCLUDE_DIR} ${SYNC_INCLUDE_DIR} ${LOG_INCLUDE_DIR})
-target_link_libraries(geometry log sync)
+add_library (geometry SHARED "geometry.c" "linear.c")
+add_dependencies(geometry json array dict log sync)
+target_include_directories(geometry PUBLIC ${GEOMETRY_INCLUDE_DIR} ${JSON_INCLUDE_DIR} ${ARRAY_INCLUDE_DIR} ${DICT_INCLUDE_DIR} ${SYNC_INCLUDE_DIR} ${LOG_INCLUDE_DIR})
+target_link_libraries(geometry json array dict log sync m)

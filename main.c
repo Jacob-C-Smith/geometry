@@ -73,6 +73,16 @@ int geometry_point_example ( int argc, const char *argv[] );
  */
 int geometry_line_example ( int argc, const char *argv[] );
 
+/** !
+ * Polygon example program
+ * 
+ * @param argc the argc parameter of the entry point
+ * @param argv the argv parameter of the entry point
+ * 
+ * @return 1 on success, 0 on error
+ */
+int geometry_polygon_example ( int argc, const char *argv[] );
+
 // Entry point
 int main ( int argc, const char *argv[] )
 {
@@ -118,6 +128,12 @@ int main ( int argc, const char *argv[] )
         // Error check
         if ( geometry_line_example(argc, argv) == 0 ) goto failed_to_run_line_example;
 
+    // Run the polygon example program
+    if ( examples_to_run[GEOMETRY_POLYGON_EXAMPLE] )
+
+        // Error check
+        if ( geometry_polygon_example(argc, argv) == 0 ) goto failed_to_run_polygon_example;
+
     // TODO: Add more examples
 
     // Clean up geometry
@@ -152,7 +168,14 @@ int main ( int argc, const char *argv[] )
 
             // Error
             return EXIT_FAILURE; 
-        
+
+        failed_to_run_polygon_example:
+
+            // Print an error message
+            printf("Failed to run polygon example!\n");
+
+            // Error
+            return EXIT_FAILURE;         
     }
 }
 
@@ -434,6 +457,70 @@ int geometry_line_example ( int argc, const char *argv[] )
 
                 // Error
                 return 0;
+        }
+    }
+}
+
+int geometry_polygon_example ( int argc, const char *argv[] )
+{
+    
+    // Supress warnings
+    (void) argc;
+    (void) argv;
+
+    // Formatting
+    printf(
+        "╭─────────────────╮\n"\
+        "│ polygon example │\n"\
+        "╰─────────────────╯\n"\
+        "TODO: Describe\n\n"
+    );
+
+    // NOTE: These polygons are from visualgo's computational geometry page
+    //       https://visualgo.net/en/polygon
+
+    // Initialized data
+    char _simple_json[]     = "[{\"x\":1,\"y\":6},{\"x\":3,\"y\":1},{\"x\":7,\"y\":2},{\"x\":4,\"y\":4},{\"x\":8,\"y\":5}]";
+    char _convex_json[]     = "[{\"x\":150,\"y\":330},{\"x\":550,\"y\":330},{\"x\":700,\"y\":200},{\"x\":550,\"y\":50},{\"x\":150,\"y\":50}]";
+    char _concave_json[]    = "[{\"x\":150,\"y\":330},{\"x\":250,\"y\":250},{\"x\":550,\"y\":330},{\"x\":700,\"y\":200},{\"x\":550,\"y\":50},{\"x\":150,\"y\":50}]";
+    char _mountain_json[]   = "[{\"x\":150,\"y\":330},{\"x\":750,\"y\":330},{\"x\":650,\"y\":50},{\"x\":550,\"y\":300},{\"x\":450,\"y\":50},{\"x\":350,\"y\":300},{\"x\":250,\"y\":50}]";
+    char _maze_json[]       = "[{\"x\":120,\"y\":320},{\"x\":400,\"y\":320},{\"x\":400,\"y\":40},{\"x\":120,\"y\":40},{\"x\":120,\"y\":240},{\"x\":320,\"y\":240},{\"x\":320,\"y\":120},{\"x\":200,\"y\":120},{\"x\":200,\"y\":160},{\"x\":280,\"y\":160},{\"x\":280,\"y\":200},{\"x\":160,\"y\":200},{\"x\":160,\"y\":80},{\"x\":360,\"y\":80},{\"x\":360,\"y\":280},{\"x\":120,\"y\":280}]";
+    char _star_json[]       = "[{\"x\":80,\"y\":280},{\"x\":180,\"y\":200},{\"x\":320,\"y\":320},{\"x\":220,\"y\":180},{\"x\":400,\"y\":200},{\"x\":200,\"y\":140},{\"x\":240,\"y\":40},{\"x\":160,\"y\":120},{\"x\":80,\"y\":40},{\"x\":140,\"y\":180}]";
+    char _goalkeeper_json[] = "[{\"x\":80,\"y\":280},{\"x\":400,\"y\":320},{\"x\":700,\"y\":340},{\"x\":860,\"y\":320},{\"x\":820,\"y\":280},{\"x\":680,\"y\":300},{\"x\":680,\"y\":180},{\"x\":840,\"y\":140},{\"x\":820,\"y\":60},{\"x\":780,\"y\":80},{\"x\":800,\"y\":120},{\"x\":640,\"y\":140},{\"x\":580,\"y\":180},{\"x\":520,\"y\":180},{\"x\":480,\"y\":60},{\"x\":400,\"y\":20},{\"x\":240,\"y\":40},{\"x\":260,\"y\":80},{\"x\":420,\"y\":60},{\"x\":380,\"y\":200},{\"x\":300,\"y\":100},{\"x\":220,\"y\":120},{\"x\":240,\"y\":180},{\"x\":320,\"y\":220},{\"x\":280,\"y\":260},{\"x\":220,\"y\":260},{\"x\":100,\"y\":240}]";
+    char _fish_json[]       = "[{\"x\":180,\"y\":180},{\"x\":240,\"y\":220},{\"x\":320,\"y\":220},{\"x\":380,\"y\":200},{\"x\":440,\"y\":160},{\"x\":480,\"y\":180},{\"x\":520,\"y\":240},{\"x\":520,\"y\":20},{\"x\":480,\"y\":80},{\"x\":440,\"y\":100},{\"x\":400,\"y\":40},{\"x\":340,\"y\":20},{\"x\":300,\"y\":20},{\"x\":260,\"y\":40},{\"x\":200,\"y\":60},{\"x\":180,\"y\":80},{\"x\":140,\"y\":140}]";
+    json_value *p_goalkeeper = 0;
+    geometry _goalkeeper = { 0 };
+    double goalkeeper_area = 0.0;
+
+    // Parse the goalkeeper json text into a value
+    if ( parse_json_value(&_goalkeeper_json, 0, &p_goalkeeper) == 0 ) goto failed_to_parse_json;
+
+    // Construct the goalkeeper geometry
+    if ( geometry_polygon_load_as_json(&_goalkeeper, p_goalkeeper ) == 0 ) goto failed_to_construct_polygon;
+
+    // Compute the area of the goalkeeper geometry
+    if ( geometry_polygon_area(&_goalkeeper, &goalkeeper_area) == 0 ) goto failed_to_compute_area;
+
+    // Print the area of the goalkeeper geometry
+    printf("Area of goalkeeper: %lg distance units squared\n", goalkeeper_area);
+
+    // Success
+    return 1;
+
+    // TODO
+    failed_to_parse_json:
+    failed_to_construct_polygon:
+    failed_to_compute_area:
+
+        // Error
+        return 0;
+
+    // Error handling
+    {
+
+        // Geometry errors
+        {
+            
         }
     }
 }

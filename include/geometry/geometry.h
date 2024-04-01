@@ -34,6 +34,29 @@
     #define DLLEXPORT
 #endif
 
+// Set the reallocator for the dict module
+#ifdef DICT_REALLOC
+    #undef DICT_REALLOC
+    #define DICT_REALLOC(p, sz) realloc(p, sz)
+#endif
+
+// Set the reallocator for the array module
+#ifdef ARRAY_REALLOC
+    #undef ARRAY_REALLOC
+    #define ARRAY_REALLOC(p, sz) realloc(p, sz)
+#endif
+
+// Set the reallocator for the json module
+#ifdef JSON_REALLOC
+    #undef JSON_REALLOC
+    #define JSON_REALLOC(p, sz) realloc(p, sz)
+#endif
+
+// Memory management macro
+#ifndef GEOMETRY_REALLOC
+#define GEOMETRY_REALLOC(p, sz) realloc(p,sz)
+#endif
+
 // Enumeration definitions
 enum geometry_type_e
 {
@@ -60,6 +83,7 @@ typedef struct geometry_point_s      geometry_point;
 typedef struct geometry_point_list_s geometry_point_list;
 typedef struct geometry_line_s       geometry_line;
 typedef struct geometry_line_list_s  geometry_line_list;
+typedef struct geometry_polygon_s    geometry_polygon;
 typedef struct geometry_s            geometry;
 
 typedef int (*fn_geometry_distance)     (geometry *p_a, geometry *p_b, double *p_return);
@@ -100,6 +124,12 @@ struct geometry_line_list_s
     geometry_line *p_lines;
 };
 
+struct geometry_polygon_s
+{
+    size_t quantity;
+    geometry_point *p_verticies;
+};
+
 struct geometry_s
 {
     enum geometry_type_e type;
@@ -110,6 +140,7 @@ struct geometry_s
         geometry_point_list point_list;
         geometry_line       line;
         geometry_line_list  line_list;
+        geometry_polygon    polygon;
     };
 };
 
@@ -149,6 +180,26 @@ int geometry_point_load_as_json ( geometry *p_geometry, json_value *p_value );
 int geometry_line_construct ( geometry *p_geometry, double x0, double y0, double x1, double y1 );
 
 /** !
+ * Construct a polygon from a json value
+ * 
+ * @param p_geometry return
+ * @param p_value    the json value 
+ * 
+ * @return 1 on success, 0 on error
+ */
+int geometry_polygon_load_as_json ( geometry *p_geometry, json_value *p_value );
+
+/** !
+ * Compute the area of a polygon
+ * 
+ * @param p_geometry the polygon
+ * @param p_result   return
+ * 
+ * @return 1 on success, 0 on error
+*/
+int geometry_polygon_area ( geometry *p_geometry, double *p_result );
+
+/** !
  * Compute the distance between two geometries
  * 
  * @param p_a      the first geometry
@@ -158,3 +209,15 @@ int geometry_line_construct ( geometry *p_geometry, double x0, double y0, double
  * @return 1 on success, 0 on error
 */
 int geometry_distance ( geometry *p_a, geometry *p_b, double *p_result );
+
+/** !
+ * Given three points, determine wether they form a counterclockwise angle.
+ * 
+ * @param p_a point A
+ * @param p_b point B
+ * @param p_c point C
+ * 
+ * @return If A -> B -> C is counterclockwise, > 0. If clockwise, < 0. If colinear, 0.  
+ */
+int geometry_point_ccw ( geometry_point *p_a, geometry_point *p_b, geometry_point *p_c );
+

@@ -269,6 +269,7 @@ int geometry_point_load_as_json ( geometry *p_geometry, json_value *p_value )
            y = 0.0;
     json_value *p_x = 0,
                *p_y = 0;
+    
     // Strategy
     switch (p_value->type)
     {
@@ -454,4 +455,185 @@ int geometry_line_construct ( geometry *p_geometry, double x0, double y0, double
                 return 0;
         }
     }
+}
+
+int geometry_polygon_load_as_json ( geometry *p_geometry, json_value *p_value )
+{
+
+    // Argument check
+    if ( p_geometry == (void *) 0 ) goto no_geometry;
+    if ( p_value    == (void *) 0 ) goto no_value;
+
+    // Type check
+    if ( p_value->type != JSON_VALUE_ARRAY ) goto wrong_type;
+    
+    // Initialized data
+    array  *p_array =  p_value->list;
+    size_t  vertex_quantity = array_size(p_array);
+    geometry_point *p_verticies = (void *) 0;
+
+    // Error check
+    if ( vertex_quantity < 3 ) goto not_a_polygon;
+    
+    // Allocate memory for verticies
+    p_verticies = GEOMETRY_REALLOC(0, sizeof(geometry_point) * vertex_quantity);
+
+    // Error check
+    if ( p_verticies == (void *) 0 ) goto no_mem;
+
+    // Iterate through the array
+    for (size_t i = 0; i < vertex_quantity; i++)
+    {
+        
+        // Initialized data
+        json_value *i_value   = 0;
+        geometry    _geometry = { 0 };
+
+        // Store the json value at index i
+        if ( array_index(p_array, i, &i_value) == 0 ) goto failed_to_index_array;
+
+        // Construct a geometry from the json value
+        if ( geometry_point_load_as_json(&_geometry, i_value) == 0 ) goto failed_to_load_point;
+
+        // Store the point 
+        p_verticies[i] = _geometry.point;
+    }
+    
+    // Store the polygon
+    *p_geometry = (geometry)
+    {
+        .type    = GEOMETRY_POLYGON,
+        .polygon = 
+        {
+            .quantity    = vertex_quantity,
+            .p_verticies = p_verticies
+        }
+    };
+
+    // Success
+    return 1;
+
+    // TODO:
+    failed_to_index_array:
+    failed_to_load_point:
+    not_a_polygon:
+    no_mem:
+
+        // Error
+        return 0;
+
+    // Error handling
+    {
+
+        // Argument errors
+        {
+            no_geometry:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_geometry\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+            
+            no_value:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_value\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+
+        // JSON errors
+        {
+            wrong_type:
+                #ifndef NDEBUG
+                    log_error("[geometry] Parameter \"p_value\" must be of type [ array ] in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+
+        // Geometry errors
+        {
+            empty_container:
+                #ifndef NDEBUG
+                    log_error("[geometry] Parameter \"p_value\" must have at least one element in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+    }
+}
+
+int geometry_polygon_area ( geometry *p_geometry, double *p_result )
+{
+
+    // Argument check
+    if ( p_geometry == (void *) 0 ) goto no_geometry;
+    if ( p_result   == (void *) 0 ) goto no_result;
+
+    // Initialized data
+    geometry_polygon _polygon = p_geometry->polygon;
+    geometry_point   _first_point = _polygon.p_verticies[0],
+                     _last_point  = _polygon.p_verticies[_polygon.quantity - 1];
+
+    double result = 0.0,
+           red    = 0.0,
+           blue   = 0.0;
+
+    // Iterate over each point in the polygon
+    for (size_t i = 0; i < _polygon.quantity-1; i++)
+    {
+
+        // Initialized data
+        geometry_point _current_point = _polygon.p_verticies[i],
+                       _next_point    = _polygon.p_verticies[i + 1];
+
+        // Accumulate
+        blue += _current_point.x * _next_point.y;
+        red  += _current_point.y * _next_point.x;
+    }
+
+    // Final accumulate.
+    blue += _first_point.y * _last_point.x;
+    red  += _first_point.x * _last_point.y;
+
+    // Store the absolute value of the result
+    result = fabs( blue - red );
+    
+    // Return the result to the caller
+    *p_result = result;
+
+    // Success
+    return 1;
+
+    // TODO
+    no_geometry:
+    no_result:
+        
+        // Error
+        return 0;
+
+    // Error handling
+    {
+
+        // Argument errors
+        {
+
+        }
+    }
+}
+
+int geometry_ccw ( geometry_point *p_a, geometry_point *p_b, geometry_point *p_c )
+{
+
+    // Argument check
+    //
+
+    // Success
+    return (p_b->x - p_a->x) * (p_c->y - p_a->y) - (p_c->x - p_a->x) * (p_b->y - p_a->y);
+    
 }

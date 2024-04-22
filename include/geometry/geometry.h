@@ -76,15 +76,18 @@ struct geometry_point_s;
 struct geometry_point_list_s;
 struct geometry_line_s;
 struct geometry_line_list_s;
+struct geometry_polygon_s;
+struct geometry_polygon_list_s;
 struct geometry_s;
 
 // Type definitions
-typedef struct geometry_point_s      geometry_point;
-typedef struct geometry_point_list_s geometry_point_list;
-typedef struct geometry_line_s       geometry_line;
-typedef struct geometry_line_list_s  geometry_line_list;
-typedef struct geometry_polygon_s    geometry_polygon;
-typedef struct geometry_s            geometry;
+typedef struct geometry_point_s        geometry_point;
+typedef struct geometry_point_list_s   geometry_point_list;
+typedef struct geometry_line_s         geometry_line;
+typedef struct geometry_line_list_s    geometry_line_list;
+typedef struct geometry_polygon_s      geometry_polygon;
+typedef struct geometry_polygon_list_s geometry_polygon_list;
+typedef struct geometry_s              geometry;
 
 typedef int (*fn_geometry_distance)     (geometry *p_a, geometry *p_b, double *p_return);
 typedef int (*fn_geometry_equals)       (geometry *p_a, geometry *p_b, bool   *p_return);
@@ -130,21 +133,40 @@ struct geometry_polygon_s
     geometry_point *p_verticies;
 };
 
+struct geometry_polygon_list_s
+{
+    size_t quantity;
+    geometry_polygon *p_polygons;
+};
+
 struct geometry_s
 {
     enum geometry_type_e type;
 
     union
     {
-        geometry_point      point;
-        geometry_point_list point_list;
-        geometry_line       line;
-        geometry_line_list  line_list;
-        geometry_polygon    polygon;
+        geometry_point        point;
+        geometry_point_list   point_list;
+        geometry_line         line;
+        geometry_line_list    line_list;
+        geometry_polygon      polygon;
+        geometry_polygon_list polygon_list;
     };
 };
 
 // Function declarations
+
+// Initializers
+/** !
+ * Initialize the geometry library
+ * 
+ * @param void
+ * 
+ * @return 1 on success, 0 on error
+ */
+int geometry_init ( void );
+
+// Constructors
 /** !
  * Construct a point from X and Y values
  * 
@@ -189,6 +211,17 @@ int geometry_line_construct ( geometry *p_geometry, double x0, double y0, double
  */
 int geometry_polygon_load_as_json ( geometry *p_geometry, json_value *p_value );
 
+// Geometric operations
+/** !
+ * Compute the area of a geometry
+ * 
+ * @param p_geometry the area
+ * @param p_result   return
+ * 
+ * @return 1 on success, 0 on error
+*/
+int geometry_area ( geometry *p_geometry, double *p_result );
+
 /** !
  * Compute the area of a polygon
  * 
@@ -197,7 +230,7 @@ int geometry_polygon_load_as_json ( geometry *p_geometry, json_value *p_value );
  * 
  * @return 1 on success, 0 on error
 */
-int geometry_polygon_area ( geometry *p_geometry, double *p_result );
+int geometry_polygon_area ( geometry_polygon *p_polygon, double *p_result );
 
 /** !
  * Compute the distance between two geometries
@@ -221,3 +254,12 @@ int geometry_distance ( geometry *p_a, geometry *p_b, double *p_result );
  */
 int geometry_point_ccw ( geometry_point *p_a, geometry_point *p_b, geometry_point *p_c );
 
+// Cleanup
+/** !
+ * Cleanup the geometry library 
+ * 
+ * @param void
+ * 
+ * @return 1 on success, 0 on error
+ */
+int geometry_quit ( void );

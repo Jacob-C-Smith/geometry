@@ -4,75 +4,200 @@
 int geometry_point_distance ( geometry *p_a, geometry *p_b, double *p_result );
 
 // Function definitions
-double geometry_area ( geometry *p_geometry )
+int geometry_init ( void )
+{
+
+    // Initialize the log library
+    log_init(0, true);
+
+    // Success
+    return 1;
+}
+
+int geometry_area ( geometry *p_geometry, double *p_result )
 {
     
     // Argument check
-    //
+    if ( p_geometry == (void *) 0 ) goto no_geometry;
+    if ( p_result   == (void *) 0 ) goto no_result;
 
     // Initialized data
-    //
+    double ret = 0;
 
     // Switch on type
     switch (p_geometry->type)
     {
-    case GEOMETRY_POINT:
-    case GEOMETRY_POINT_LIST:
-    case GEOMETRY_LINE:
-    case GEOMETRY_LINE_LIST:
+        case GEOMETRY_POINT:
+        case GEOMETRY_POINT_LIST:
+        case GEOMETRY_LINE:
+        case GEOMETRY_LINE_LIST:
 
-        return 0.0;
+            // These types of geometry have no area
+            ret = 0.0;
+            
+            // Done
+            break;
+            
+        case GEOMETRY_POLYGON:
 
-    case GEOMETRY_POLYGON:
-    /*
-    result = 0.0, point O(0.0, 0.0) 
+            // Store the area
+            if ( geometry_polygon_area(&p_geometry->polygon, &ret) == 0 ) goto failed_to_calculate_polygon_area;
+            
+            // Done
+            break;
 
-    for (i = 0; i < P.size()-1; ++i)
+        case GEOMETRY_POLYGON_LIST:
+        {
 
-    result += cross(toVec(O,P[i]),toVec(O,P[i+1]))/2
+            // Initialized data
+            double temp = 0.0;
 
-    return fabs(result)
-    */
-    default:
-        break;
+            // Iterate through each polygon
+            for (size_t i = 0; i < p_geometry->polygon_list.quantity; i++)
+            {
+
+                // Compute the area
+                geometry_polygon_area(&p_geometry->polygon_list.p_polygons[i], &temp);
+
+                // Accumulate the area
+                ret += temp;
+            }
+
+            // Done
+            break;
+        }
+
+        case GEOMETRY_INVALID:
+        default:
+
+            // Error
+            goto invalid_geometry_type;
+    }
+
+    // Store the return value
+    *p_result = ret;
+
+    // Success
+    return 1;
+
+    // Error handling
+    {
+
+        // Argument errors
+        {
+            no_geometry:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_geometry\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+
+            no_result:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_result\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+                
+        }
+
+        // Geometry errors
+        {
+            failed_to_calculate_polygon_area:
+                #ifndef NDEBUG
+                    log_error("[geometry] Failed to calculate polygon area in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+
+            invalid_geometry_type:
+                #ifndef NDEBUG
+                    log_error("[geometry] Parameter \"p_geometry\" is of invalid type in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
     }
 }
 
 double geometry_length ( geometry *p_geometry )
 {
-
     
     // Argument check
-    //
+    if ( p_geometry == (void *) 0 ) goto no_geometry;
 
     // Initialized data
-    //
+    double ret = 0.0;
 
-    // Switch on type
-    switch (p_geometry->type)
+    // Strategy
+    switch ( p_geometry->type )
     {
-    case GEOMETRY_POINT:
-    case GEOMETRY_POINT_LIST:
-        return 0.0;
+        case GEOMETRY_POINT:
+        case GEOMETRY_POINT_LIST:
 
-    case GEOMETRY_LINE:
-        return sqrt(pow((p_geometry->line.x1, p_geometry->line.x0),2) + pow((p_geometry->line.y1, p_geometry->line.y0),2));
-    case GEOMETRY_LINE_LIST:
+            // Done
+            break;
 
+        case GEOMETRY_LINE:
 
+            // Store the length of the line
+            ret = sqrt(pow((p_geometry->line.x1, p_geometry->line.x0), 2) + pow((p_geometry->line.y1, p_geometry->line.y0), 2));
 
-    case GEOMETRY_POLYGON:
-    /*
-    result = 0.0, point O(0.0, 0.0) 
+            // Done
+            break;
 
-    for (i = 0; i < P.size()-1; ++i)
+        case GEOMETRY_LINE_LIST:
 
-    result += cross(toVec(O,P[i]),toVec(O,P[i+1]))/2
+            // TODO
 
-    return fabs(result)
-    */
-    default:
-        break;
+            // Done
+            break;
+
+        case GEOMETRY_POLYGON:
+
+            // TODO
+            //
+
+            /*
+                result = 0.0, point O(0.0, 0.0) 
+
+                for (i = 0; i < P.size()-1; ++i)
+
+                result += cross(toVec(O,P[i]),toVec(O,P[i+1]))/2
+
+                return fabs(result)
+            */
+
+            // Done
+            break;
+
+        default:
+
+            // TODO: Error
+            // Done
+            break;
+    }
+
+    // Success
+    return ret;
+
+    // Error handling
+    {
+
+        // Argument errors
+        {
+            no_geometry:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_geometry\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+                
+                // Error
+                return 0;
+        }
     }
 }
 
@@ -80,16 +205,12 @@ int geometry_distance ( geometry *p_a, geometry *p_b, double *p_result )
 {
     
     // Argument check
-    //
+    if ( p_a      == (void *) 0 ) goto no_a;
+    if ( p_b      == (void *) 0 ) goto no_b;
+    if ( p_result == (void *) 0 ) goto no_result;
 
-    // Check the precedence of types of geometry
-    if ( p_a->type == p_b->type )
-    
-        // Do nothing
-        ;
-
-    // Swap A and B
-    else if ( p_a->type > p_b->type )
+    // Check the precedence of the input geometry
+    if ( p_a->type > p_b->type )
     {
 
         // Initialized data
@@ -106,12 +227,10 @@ int geometry_distance ( geometry *p_a, geometry *p_b, double *p_result )
 
         // Point to geometry
         case GEOMETRY_POINT:
-        {
 
             // Compute the distance from point a to geometry b
-            if ( geometry_point_distance(p_a, p_b, p_result) == 0 ) goto failed_to_compute_distance;
-        }
-
+            if ( geometry_point_distance(p_a, p_b, p_result) == 0 ) goto failed_to_compute_distance_from_point;
+        
         case GEOMETRY_POINT_LIST:
         case GEOMETRY_LINE:
         case GEOMETRY_LINE_LIST:
@@ -123,21 +242,60 @@ int geometry_distance ( geometry *p_a, geometry *p_b, double *p_result )
     // Success
     return 1;
 
-    // TODO
-    failed_to_compute_distance:
+    // Error handling
+    {
 
-        // Error
-        return 0;
+        // Argument errors
+        {
+            no_a:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_a\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+
+            no_b:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_b\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+
+            no_result:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_result\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+
+        // Geometry errors
+        {
+            failed_to_compute_distance_from_point:
+                #ifndef NDEBUG
+                    log_error("[geometry] Failed to compute distance to from point in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+    }
 }
 
 int geometry_point_distance ( geometry *p_a, geometry *p_b, double *p_result )
 {
+
     // Argument check
-    //
+    if ( p_a      == (void *) 0 ) goto no_a;
+    if ( p_b      == (void *) 0 ) goto no_b;
+    if ( p_result == (void *) 0 ) goto no_result;
 
     // Initialized data
-    geometry_point a = p_a->point;
     double ret = 0.0;
+    geometry_point a = p_a->point;
 
     // Strategy
     switch (p_b->type)
@@ -194,6 +352,8 @@ int geometry_point_distance ( geometry *p_a, geometry *p_b, double *p_result )
         }
 
         default:
+            
+            // TODO: Error!
             break;
     }
 
@@ -202,23 +362,64 @@ int geometry_point_distance ( geometry *p_a, geometry *p_b, double *p_result )
     
     // Success
     return 1;
+
+    // Error handling
+    {
+
+        // Argument errors
+        {
+            no_a:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_a\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+
+            no_b:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_b\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+
+            no_result:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_result\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+    }
 }
 
-double geometry_point_in_polygon ( geometry *p_geometry )
+bool geometry_point_in_polygon ( geometry *p_geometry )
 {
+
+    // TODO
+
+    // Argument check
+    //
+
+    // Initialized data
+    bool ret = false;
+    
     /*
-    
-    for (i = 0; i < P.size()-1; ++i)
+        for (i = 0; i < P.size()-1; ++i)
 
-  if ccw(p, P[i], P[i+1])
+        if ccw(p, P[i], P[i+1])
 
-    sum += angle(P[i], p, P[i+1])
+            sum += angle(P[i], p, P[i+1])
 
-  else sum -= angle(P[i], p, P[i+1])
+        else sum -= angle(P[i], p, P[i+1])
 
-return fabs(sum) > PI ? 1 : -1; // 1/-1 = in/out
-    
+        return fabs(sum) > PI ? 1 : -1; // 1/-1 = in/out   
     */
+
+   // Success
+   return ret;
 }
 
 int geometry_point_construct ( geometry *p_geometry, double x, double y )
@@ -364,14 +565,6 @@ int geometry_point_load_as_json ( geometry *p_geometry, json_value *p_value )
 
     // Success
     return 1;
-
-    // TODO: 
-    missing_x:
-    missing_y:
-    wrong_x_type:
-    wrong_y_type:
-        // Error
-        return 0;
     
     // Error handling
     {
@@ -404,6 +597,39 @@ int geometry_point_load_as_json ( geometry *p_geometry, json_value *p_value )
 
                 // Error
                 return 0;
+                
+            missing_x:
+                #ifndef NDEBUG
+                    log_error("[geometry] Parameter \"p_value\" must contain property \"x\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+
+            missing_y:
+                #ifndef NDEBUG
+                    log_error("[geometry] Parameter \"p_value\" must contain property \"y\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+
+            wrong_x_type:
+                #ifndef NDEBUG
+                    log_error("[geometry] Property \"x\" of parameter \"p_value\" must be of type [ integer | number ] in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+
+            wrong_y_type:
+                #ifndef NDEBUG
+                    log_error("[geometry] Property \"y\" of parameter \"p_value\" must be of type [ integer | number ] in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+
         }
 
         // Geometry errors
@@ -513,15 +739,6 @@ int geometry_polygon_load_as_json ( geometry *p_geometry, json_value *p_value )
     // Success
     return 1;
 
-    // TODO:
-    failed_to_index_array:
-    failed_to_load_point:
-    not_a_polygon:
-    no_mem:
-
-        // Error
-        return 0;
-
     // Error handling
     {
 
@@ -538,6 +755,17 @@ int geometry_polygon_load_as_json ( geometry *p_geometry, json_value *p_value )
             no_value:
                 #ifndef NDEBUG
                     log_error("[geometry] Null pointer provided for parameter \"p_value\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+
+        // Array errors
+        {
+            failed_to_index_array:
+                #ifndef NDEBUG
+                    log_error("[geometry] Call to function \"array_index\" returned an erroneous value in call to function \"%s\"\n", __FUNCTION__);
                 #endif
 
                 // Error
@@ -564,45 +792,70 @@ int geometry_polygon_load_as_json ( geometry *p_geometry, json_value *p_value )
 
                 // Error
                 return 0;
+                
+            failed_to_load_point:
+                #ifndef NDEBUG
+                    log_error("[geometry] Failed to construct point in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+            
+            not_a_polygon:
+                #ifndef NDEBUG
+                    log_error("[geometry] Polygon must have at least 3 points in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+
+        // Standard library errors
+        {          
+            no_mem:
+                #ifndef NDEBUG
+                    log_error("[Standard library] Failed to allocate memory in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;    
         }
     }
 }
 
-int geometry_polygon_area ( geometry *p_geometry, double *p_result )
+int geometry_polygon_area ( geometry_polygon *p_polygon, double *p_result )
 {
 
     // Argument check
-    if ( p_geometry == (void *) 0 ) goto no_geometry;
-    if ( p_result   == (void *) 0 ) goto no_result;
+    if ( p_polygon == (void *) 0 ) goto no_polygon;
+    if ( p_result  == (void *) 0 ) goto no_result;
 
     // Initialized data
-    geometry_polygon _polygon = p_geometry->polygon;
-    geometry_point   _first_point = _polygon.p_verticies[0],
-                     _last_point  = _polygon.p_verticies[_polygon.quantity - 1];
-
     double result = 0.0,
            red    = 0.0,
            blue   = 0.0;
+    geometry_point _first_point = p_polygon->p_verticies[0],
+                   _last_point  = p_polygon->p_verticies[p_polygon->quantity - 1];
 
     // Iterate over each point in the polygon
-    for (size_t i = 0; i < _polygon.quantity-1; i++)
+    for ( size_t i = 0; i < p_polygon->quantity - 1; i++ )
     {
 
         // Initialized data
-        geometry_point _current_point = _polygon.p_verticies[i],
-                       _next_point    = _polygon.p_verticies[i + 1];
+        geometry_point _current_point = p_polygon->p_verticies[i],
+                       _next_point    = p_polygon->p_verticies[i + 1];
 
         // Accumulate
         blue += _current_point.x * _next_point.y;
         red  += _current_point.y * _next_point.x;
     }
 
-    // Final accumulate.
+    // Final accumulate
     blue += _first_point.y * _last_point.x;
     red  += _first_point.x * _last_point.y;
 
     // Store the absolute value of the result
-    result = fabs( blue - red );
+    result = fabs(blue - red);
     
     // Return the result to the caller
     *p_result = result;
@@ -610,19 +863,25 @@ int geometry_polygon_area ( geometry *p_geometry, double *p_result )
     // Success
     return 1;
 
-    // TODO
-    no_geometry:
-    no_result:
-        
-        // Error
-        return 0;
-
     // Error handling
     {
 
         // Argument errors
         {
+            no_polygon:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_polygon\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
 
+                // Error
+                return 0;
+            no_result:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_result\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
         }
     }
 }
@@ -631,9 +890,48 @@ int geometry_ccw ( geometry_point *p_a, geometry_point *p_b, geometry_point *p_c
 {
 
     // Argument check
-    //
+    if ( p_a == (void *) 0 ) goto no_a;
+    if ( p_b == (void *) 0 ) goto no_b;
+    if ( p_c == (void *) 0 ) goto no_c;
 
     // Success
     return (p_b->x - p_a->x) * (p_c->y - p_a->y) - (p_c->x - p_a->x) * (p_b->y - p_a->y);
     
+    // Error handling
+    {
+        
+        // Argument errors
+        {
+            no_a:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_a\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+
+            no_b:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_b\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+
+            no_c:
+                #ifndef NDEBUG
+                    log_error("[geometry] Null pointer provided for parameter \"p_c\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+    }
+}
+
+int geometry_quit ( void )
+{
+
+    // Success
+    return 1;   
 }

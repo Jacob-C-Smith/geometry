@@ -8,7 +8,7 @@ int geometry_init ( void )
 {
 
     // Initialize the log library
-    log_init(0, true);
+    log_init();
 
     // Success
     return 1;

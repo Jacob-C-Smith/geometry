@@ -18,6 +18,18 @@ if (${IS_DEBUG_BUILD})
     add_compile_options(-Wall -Wextra -Wpedantic -Wpointer-arith -Wstrict-prototypes -Wformat-security -Wfloat-equal -Wshadow -Wconversion -Wlogical-not-parentheses -Wnull-dereference -Wno-unused-value)
 endif ()
 
+IF(WIN32)
+    find_package(SDL2_image REQUIRED CONFIG REQUIRED COMPONENTS SDL2_image)
+ELSEIF(LINUX)
+    set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+    find_package(SDL2_image REQUIRED)
+ELSEIF(APPLE)
+
+ENDIF(WIN32)
+
+find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
+find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
+
 # Add the LOG project
 if ( NOT "${HAS_LOG}")
 
@@ -103,6 +115,11 @@ add_executable (geometry_example "main.c")
 add_dependencies(geometry_example geometry)
 target_include_directories(geometry_example PUBLIC ${GEOMETRY_INCLUDE_DIR} ${JSON_INCLUDE_DIR} ${ARRAY_INCLUDE_DIR} ${DICT_INCLUDE_DIR} ${SYNC_INCLUDE_DIR} ${LOG_INCLUDE_DIR})
 target_link_libraries(geometry_example geometry)
+
+add_executable (geometry_rasterizer "rasterizer.c")
+add_dependencies(geometry_rasterizer geometry)
+target_include_directories(geometry_rasterizer PUBLIC ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS} ${GEOMETRY_INCLUDE_DIR} ${JSON_INCLUDE_DIR} ${ARRAY_INCLUDE_DIR} ${DICT_INCLUDE_DIR} ${SYNC_INCLUDE_DIR} ${LOG_INCLUDE_DIR})
+target_link_libraries(geometry_rasterizer geometry ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
 
 # Add source to the tester
 #add_executable (geometry_test "geometry_test.c")
